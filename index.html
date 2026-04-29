@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>game mudah saja</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  overflow:hidden;
+  color:white;
+  text-align:center;
+  background:black;
+}
+
+/* 🌌 background */
+.stars{
+  position:fixed;
+  width:100%;
+  height:100%;
+  background:url("https://www.transparenttextures.com/patterns/stardust.png");
+  animation:move 60s linear infinite;
+}
+@keyframes move{
+  from{background-position:0 0;}
+  to{background-position:10000px 5000px;}
+}
+
+.box{
+  position:relative;
+  z-index:2;
+  margin-top:40px;
+}
+
+/* 👨‍🚀 karakter */
+.character{
+  width:90px;
+  animation: float 3s infinite, spin 8s linear infinite, glow 2s infinite alternate;
+}
+@keyframes float{
+  50%{transform:translateY(-10px);}
+}
+@keyframes spin{
+  from{transform:rotate(0);}
+  to{transform:rotate(360deg);}
+}
+@keyframes glow{
+  from{filter:drop-shadow(0 0 5px cyan);}
+  to{filter:drop-shadow(0 0 20px cyan);}
+}
+
+button{
+  padding:12px;
+  margin:8px;
+  width:80%;
+  border:none;
+  border-radius:10px;
+  background:#00c6ff;
+  font-weight:bold;
+}
+button:active{transform:scale(0.95);}
+
+.timer{color:red;}
+
+/* 💀 game over */
+.boom{
+  font-size:60px;
+  animation:boom 0.5s;
+}
+@keyframes boom{
+  from{transform:scale(0);}
+  to{transform:scale(1.5);}
+}
+
+.shake{
+  animation:shake 0.3s;
+}
+@keyframes shake{
+  25%{transform:translateX(-10px);}
+  50%{transform:translateX(10px);}
+}
+</style>
+</head>
+
+<body>
+
+<div class="stars"></div>
+
+<div class="box">
+
+<!-- MENU -->
+<div id="menu">
+  <img src="https://cdn-icons-png.flaticon.com/512/3212/3212608.png" class="character">
+  <h2>🚀 SPACE QUIZ</h2>
+  <button onclick="start()">Mulai</button>
+</div>
+
+<!-- GAME -->
+<div id="game" style="display:none">
+  <h3 id="level"></h3>
+  <p id="highscore"></p>
+  <div class="timer" id="timer"></div>
+  <h2 id="soal"></h2>
+  <div id="pilihan"></div>
+</div>
+
+<!-- GAME OVER -->
+<div id="over" style="display:none">
+  <div class="boom">💥</div>
+  <h2>Misi Gagal</h2>
+  <p id="hasil"></p>
+  <button onclick="ulang()">Ulangi</button>
+</div>
+
+</div>
+
+<!-- AUDIO -->
+<audio id="bgm" loop>
+<source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_6c1f4c8f3b.mp3">
+</audio>
+
+<audio id="benar">
+<source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443e.mp3">
+</audio>
+
+<audio id="salah">
+<source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_98f4c5c7c8.mp3">
+</audio>
+
+<script>
+
+let level=1,waktu=10,interval,current;
+
+/* START */
+function start(){
+  document.getElementById("menu").style.display="none";
+  document.getElementById("game").style.display="block";
+
+  let musik=document.getElementById("bgm");
+  musik.volume=0.5;
+
+  document.body.onclick=()=>{musik.play();};
+
+  tampil();
+}
+
+/* SOAL */
+function generate(){
+  let data=[
+    {t:"Turunan x³?",o:["3x²","x²","2x","x³"],b:0},
+    {t:"Integral x dx?",o:["x²/2","x²","2x","ln x"],b:0},
+    {t:"Ibukota Australia?",o:["Sydney","Canberra","Melbourne","Perth"],b:1},
+    {t:"Planet terbesar?",o:["Mars","Bumi","Jupiter","Venus"],b:2},
+    {t:"Hukum Newton II?",o:["F=ma","E=mc²","V=IR","P=mv"],b:0},
+    {t:"Unsur Fe?",o:["Emas","Besi","Perak","Tembaga"],b:1},
+    {t:"Sinonim 'abstrak'?",o:["nyata","konkret","tak nyata","jelas"],b:2},
+    {t:"Ibukota Turki?",o:["Istanbul","Ankara","Izmir","Bursa"],b:1},
+    {t:"Akar 144?",o:["10","11","12","13"],b:2}
+  ];
+  return data[Math.floor(Math.random()*data.length)];
+}
+
+/* TAMPIL */
+function tampil(){
+  current=generate();
+
+  document.getElementById("level").innerText="🚀 Level "+level;
+
+  let hs=localStorage.getItem("hs")||0;
+  document.getElementById("highscore").innerText="🏆 High Score: "+hs;
+
+  document.getElementById("soal").innerText=current.t;
+
+  let html="";
+  current.o.forEach((o,i)=>{
+    html+=`<button onclick="cek(${i})">${o}</button>`;
+  });
+
+  document.getElementById("pilihan").innerHTML=html;
+
+  timer();
+}
+
+/* TIMER */
+function timer(){
+  waktu=10;
+  document.getElementById("timer").innerText=waktu;
+
+  interval=setInterval(()=>{
+    waktu--;
+    document.getElementById("timer").innerText=waktu;
+
+    if(waktu==0) kalah();
+  },1000);
+}
+
+/* CEK */
+function cek(j){
+  clearInterval(interval);
+
+  if(j!=current.b){
+    document.getElementById("salah").play();
+    kalah();
+  }else{
+    document.getElementById("benar").play();
+    level++;
+    tampil();
+  }
+}
+
+/* KALAH */
+function kalah(){
+  clearInterval(interval);
+
+  document.body.classList.add("shake");
+  document.body.style.background="darkred";
+
+  let hs=localStorage.getItem("hs")||0;
+  if(level>hs){
+    localStorage.setItem("hs",level);
+  }
+
+  document.getElementById("game").style.display="none";
+  document.getElementById("over").style.display="block";
+
+  document.getElementById("hasil").innerText=
+    "Level: "+level+" | High Score: "+(localStorage.getItem("hs")||level);
+}
+
+/* ULANG */
+function ulang(){location.reload();}
+
+</script>
+
+</body>
+</html>
